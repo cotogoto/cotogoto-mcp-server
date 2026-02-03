@@ -1,0 +1,1 @@
+# cotogoto-mcp-client

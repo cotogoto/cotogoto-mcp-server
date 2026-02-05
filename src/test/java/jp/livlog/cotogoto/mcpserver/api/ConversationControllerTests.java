@@ -30,7 +30,7 @@ class ConversationControllerTests {
         String payload = """
                 {
                   \"sessionId\": \"SESSION_ID\",
-                  \"apiToken\": \"API_TOKEN\",
+                  \"apiToken\": \"a02003fb2eda2ee1f9000da21963c69a\",
                   \"entry\": {
                     \"turnId\": \"turn-1\",
                     \"role\": \"user\",
@@ -73,7 +73,7 @@ class ConversationControllerTests {
         String payload = """
                 {
                   \"sessionId\": \"SESSION_ID\",
-                  \"apiToken\": \"API_TOKEN\"
+                  \"apiToken\": \"a02003fb2eda2ee1f9000da21963c69a\"
                 }
                 """;
 

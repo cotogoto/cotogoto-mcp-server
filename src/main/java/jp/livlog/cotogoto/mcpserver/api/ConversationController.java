@@ -28,12 +28,12 @@ public class ConversationController {
     public Object acceptConversation(@Valid @RequestBody ConversationRequest request) {
         if (request.apiToken() == null || request.apiToken().isBlank()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ErrorResponse("apiToken is required"));
+                    .body("apiToken is required");
         }
 
         if (request.entry() == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ErrorResponse("entry is required"));
+                    .body("entry is required");
         }
 
         SseEmitter emitter = new SseEmitter(0L);
@@ -53,6 +53,4 @@ public class ConversationController {
             @NotBlank String content) {
     }
 
-    public record ErrorResponse(String message) {
-    }
 }

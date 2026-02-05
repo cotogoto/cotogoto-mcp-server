@@ -1,16 +1,32 @@
-# cotogoto-mcp-client
+# cotogoto-mcp-server
 
-## MCP利用ガイド（API利用手順）
+## MCP 会話 API（SSE中継）
 
-### 1. エンドポイント一覧
-- `POST /api/mcp/conversations`
+このサーバーは、`POST /api/mcp/conversations` で受け取った会話リクエストを
+上流の cotogoto SSE API に転送し、受信した SSE イベントをそのままクライアントへ中継します。
 
-OpenAPI 定義:
-- `docs/openapi/domain-api.yaml`
+- ローカル受け口: `POST /api/mcp/conversations`
+- 上流転送先（既定値）: `https://app.cotogoto.ai/webapi/api/mcp/conversations`
 
 ---
 
-### 2. 会話ログ（`/api/mcp/conversations`）
+## 設定
+
+`src/main/resources/application.yaml` で上流URLを設定します。
+
+```yaml
+cotogoto:
+  upstream:
+    conversations-url: https://app.cotogoto.ai/webapi/api/mcp/conversations
+```
+
+必要に応じて環境ごとに `cotogoto.upstream.conversations-url` を上書きしてください。
+
+---
+
+## エンドポイント
+
+### `POST /api/mcp/conversations`
 
 #### リクエスト例
 ```json
@@ -25,48 +41,35 @@ OpenAPI 定義:
 }
 ```
 
-#### 主な入力項目
-- `sessionId`（必須）: 会話セッションID
-- `apiToken`（必須）: 会話に紐づくユーザーのAPIトークン
-- `entry`（必須）: 会話ログ（1件のみ）
-  - `turnId`（必須）: ターン識別子
-  - `role`（必須）: `user / assistant / system / tool`
-  - `content`（必須）: 発話内容
+#### 入力項目
+- `sessionId`（必須）
+- `apiToken`（必須・空文字不可）
+- `entry`（必須）
+  - `turnId`（必須）
+  - `role`（必須）
+  - `content`（必須）
 
-#### レスポンス例（Server-Sent Events）
+#### レスポンス（SSE）
+- 成功時: 上流から受け取った `event:` / `data:` を中継
+- 上流がHTTPエラー時: `conversation.error` イベントでエラーボディを返却
+
+例:
 ```text
 event: conversation.accepted
-data: {"accepted":true,"storedTurnIds":["turn-1"],"commandResponse":"コマンド応答（該当時のみ）"}
+data: {"accepted":true,"storedTurnIds":["turn-1"],"commandResponse":"..."}
 ```
 
----
-
-### 3. 実装上の挙動メモ
-- `entries` は `role=user` の発話だけを集約して処理します。
-- `jp.livlog.cotogoto.helper.noby.AI` を使って解析し、コマンドが検出された場合は `CommandService` に完全委譲します。
+#### エラー
+- `apiToken` 未指定または空: `400 Bad Request`
+- `entry` 未指定: `400 Bad Request`
 
 ---
 
-### 4. 注意点
-- `apiToken` が存在しない場合はエラーになります。
-- `entry` が存在しない場合はエラーになります。
+## 実装概要
 
----
-
-### 5. Apache⇔Tomcat 構成での注意点（SSE）
-SSE は接続を長時間維持するため、Apache のプロキシ設定でバッファリング無効化とタイムアウト調整が必要です。
-以下は代表的な例です（環境に合わせて調整してください）。
-
-```apache
-# mod_proxy / mod_proxy_http を前提
-ProxyPass "/api/" "http://127.0.0.1:8080/api/" flushpackets=on
-ProxyPassReverse "/api/" "http://127.0.0.1:8080/api/"
-
-# SSE は長時間接続を維持するためタイムアウトを長めに
-ProxyTimeout 300
-
-# 必要に応じて KeepAlive を有効化
-KeepAlive On
-```
-
-Tomcat 側は Spring MVC の `SseEmitter` で非同期処理として動くため、サーブレットコンテナの非同期が有効であることを前提にします。
+- `ConversationController#acceptConversation`
+  - 入力検証後に `SseEmitter` を生成
+  - `ConversationRelayService` に中継処理を委譲
+- `ConversationRelayService`
+  - 上流URLへ `POST`（`Accept: text/event-stream`）
+  - SSE行を読み取り、イベント名とデータをローカル emitter に転送

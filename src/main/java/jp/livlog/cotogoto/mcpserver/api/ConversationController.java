@@ -1,8 +1,5 @@
 package jp.livlog.cotogoto.mcpserver.api;
 
-import java.io.IOException;
-import java.util.List;
-
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 
@@ -21,6 +18,12 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 @Validated
 public class ConversationController {
 
+    private final ConversationRelayService relayService;
+
+    public ConversationController(ConversationRelayService relayService) {
+        this.relayService = relayService;
+    }
+
     @PostMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Object acceptConversation(@Valid @RequestBody ConversationRequest request) {
         if (request.apiToken() == null || request.apiToken().isBlank()) {
@@ -34,21 +37,7 @@ public class ConversationController {
         }
 
         SseEmitter emitter = new SseEmitter(0L);
-        ConversationAcceptedResponse response = new ConversationAcceptedResponse(
-                true,
-                List.of(request.entry().turnId()),
-                null);
-
-        try {
-            emitter.send(SseEmitter.event()
-                    .name("conversation.accepted")
-                    .data(response));
-            emitter.complete();
-        }
-        catch (IOException exception) {
-            emitter.completeWithError(exception);
-        }
-
+        relayService.relay(request, emitter);
         return emitter;
     }
 
@@ -62,12 +51,6 @@ public class ConversationController {
             @NotBlank String turnId,
             @NotBlank String role,
             @NotBlank String content) {
-    }
-
-    public record ConversationAcceptedResponse(
-            boolean accepted,
-            List<String> storedTurnIds,
-            String commandResponse) {
     }
 
     public record ErrorResponse(String message) {

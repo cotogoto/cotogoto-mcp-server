@@ -1,3 +1,7 @@
 spring:
   application:
     name: mcp-server
+
+cotogoto:
+  upstream:
+    conversations-url: https://app.cotogoto.ai/webapi/api/mcp/conversations

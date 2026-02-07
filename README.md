@@ -21,6 +21,13 @@
 `mcp.json` 側では、この HTTP エンドポイントを呼び出せるクライアントや
 プロキシ/ブリッジの設定が必要になります。
 
+### `mcp.json` と ConversationRequest の関係
+
+`mcp.json` は通常「どのサーバーに接続するか」を設定するためのファイルで、
+`ConversationRequest` のような会話リクエスト本文はクライアントの実行時に送信します。
+そのため、`ConversationRequest` の各フィールド（`sessionId` / `apiToken` / `entry` など）は
+`mcp.json` に直接書くのではなく、クライアントがリクエストを送るタイミングで渡します。
+
 ### LM Studio について
 
 LM Studio の `mcp.json` 書式は LM Studio 側で定義されます。

@@ -1,7 +1,12 @@
 spring:
   application:
     name: mcp-server
+  ai:
+    mcp:
+      server:
+        enabled: true
 
 cotogoto:
   upstream:
     conversations-url: https://app.cotogoto.ai/webapi/api/mcp/conversations
+    api-token: ""

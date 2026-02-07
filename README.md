@@ -48,6 +48,22 @@ cotogoto:
 
 ---
 
+## ビルドと起動
+
+```bash
+./mvnw package
+java -jar target/mcp-server-0.0.1-SNAPSHOT.jar
+```
+
+`spring-boot-maven-plugin` を `executable` モードで設定しているため、
+ビルド後は以下のように直接実行も可能です。
+
+```bash
+./target/mcp-server-0.0.1-SNAPSHOT.jar
+```
+
+---
+
 ## エンドポイント
 
 ### `POST /api/mcp/conversations`

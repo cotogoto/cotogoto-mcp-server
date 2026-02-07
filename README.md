@@ -1,12 +1,9 @@
 # cotogoto-mcp-server
 
-## MCP 会話 API（SSE中継）
+## MCP 会話 API
 
-このサーバーは、`POST /api/mcp/conversations` で受け取った会話リクエストを
-上流の cotogoto SSE API に転送し、受信した SSE イベントをそのままクライアントへ中継します。
-
-- ローカル受け口: `POST /api/mcp/conversations`
-- 上流転送先（既定値）: `https://app.cotogoto.ai/webapi/api/mcp/conversations`
+このサーバーは、MCP JSON-RPC でツールを公開し、
+cotogoto の SSE API に対して会話リクエストを同期的に送信します。
 
 ---
 
@@ -16,10 +13,8 @@
 `mcp.json` の書式は利用する MCP クライアントごとに異なるため、
 クライアントの公式ドキュメントに従って設定してください。
 
-本サーバーが提供するインターフェースは HTTP(S) の
-`POST /api/mcp/conversations` で、SSE をそのまま中継する構成です。
-`mcp.json` 側では、この HTTP エンドポイントを呼び出せるクライアントや
-プロキシ/ブリッジの設定が必要になります。
+本サーバーが提供するインターフェースは MCP JSON-RPC です。
+`mcp.json` 側では、この MCP サーバーに接続する設定を行ってください。
 
 ### `mcp.json` と ConversationRequest の関係
 
@@ -34,10 +29,8 @@ LM Studio の `mcp.json` 書式は LM Studio 側で定義されます。
 LM Studio の MCP 設定手順は公式ドキュメントを参照してください。
 https://lmstudio.ai/docs/app/mcp
 
-LM Studio が HTTP への直接接続に対応している場合は、
-このサーバーの `POST /api/mcp/conversations` を呼び出す設定を行ってください。
-もし LM Studio が MCP の stdio 方式のみ対応している場合は、
-stdio を HTTP へ中継するブリッジを用意する必要があります。
+LM Studio の MCP 設定画面で本サーバーへ接続する設定を行ってください。
+MCP の stdio 方式のみ対応している場合は、stdio を HTTP へ中継するブリッジを用意する必要があります。
 
 ---
 
@@ -100,87 +93,42 @@ java -jar target/mcp-server-0.0.1-SNAPSHOT.jar
 java -Xms256m -Xmx512m -jar target/mcp-server-0.0.1-SNAPSHOT.jar
 ```
 
-### 動作確認（ローカルでの一連の手順）
+## エンドポイント
 
-1. ビルド
+### MCP JSON-RPC (`/mcp`)
 
+Spring AI の MCP サーバーは JSON-RPC 2.0 で `/mcp` を公開します。
+
+#### listTools
 ```bash
-./mvnw package
-```
-
-2. 起動（必要ならポートや上流URLを変更）
-
-```bash
-java -jar target/mcp-server-0.0.1-SNAPSHOT.jar \
-  --server.port=8081 \
-  --cotogoto.upstream.conversations-url=https://app.cotogoto.ai/webapi/api/mcp/conversations
-```
-
-3. 会話リクエストを送信（`apiToken` は実際の値に置き換えてください）
-
-```bash
-curl -N -X POST http://localhost:8081/api/mcp/conversations \
+curl -s http://localhost:8081/mcp \
   -H 'Content-Type: application/json' \
-  -H 'Accept: text/event-stream' \
   -d '{
-    "sessionId": "SESSION_ID",
-    "apiToken": "API_TOKEN",
-    "entry": {
-      "turnId": "turn-1",
-      "role": "user",
-      "content": "おはようございます"
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "listTools"
+  }'
+```
+
+#### callTool
+```bash
+curl -s http://localhost:8081/mcp \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "callTool",
+    "params": {
+      "name": "cotogotoConversation",
+      "arguments": {
+        "message": "おはようございます"
+      }
     }
   }'
 ```
 
----
-
-## エンドポイント
-
-### `POST /api/mcp/conversations`
-
-#### リクエスト例
-```json
-{
-  "sessionId": "SESSION_ID",
-  "apiToken": "API_TOKEN",
-  "entry": {
-    "turnId": "turn-1",
-    "role": "user",
-    "content": "おはようございます"
-  }
-}
-```
-
-#### 入力項目
-- `sessionId`（必須）
-- `apiToken`（必須・空文字不可）
-- `entry`（必須）
-  - `turnId`（必須）
-  - `role`（必須）
-  - `content`（必須）
-
-#### レスポンス（SSE）
-- 成功時: 上流から受け取った `event:` / `data:` を中継
-- 上流がHTTPエラー時: `conversation.error` イベントでエラーボディを返却
-
-例:
-```text
-event: conversation.accepted
-data: {"accepted":true,"storedTurnIds":["turn-1"],"commandResponse":"..."}
-```
-
-#### エラー
-- `apiToken` 未指定または空: `400 Bad Request`
-- `entry` 未指定: `400 Bad Request`
-
----
-
 ## 実装概要
 
-- `ConversationController#acceptConversation`
-  - 入力検証後に `SseEmitter` を生成
-  - `ConversationRelayService` に中継処理を委譲
 - `ConversationRelayService`
   - 上流URLへ `POST`（`Accept: text/event-stream`）
-  - SSE行を読み取り、イベント名とデータをローカル emitter に転送
+  - SSE行を読み取り、イベント名とデータを集約して返却

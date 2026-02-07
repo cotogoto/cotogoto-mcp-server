@@ -62,6 +62,32 @@ java -jar target/mcp-server-0.0.1-SNAPSHOT.jar
 ./target/mcp-server-0.0.1-SNAPSHOT.jar
 ```
 
+### パラメータの渡し方
+
+Spring Boot の標準的な引数や環境変数で設定値を渡せます。
+
+#### 引数で渡す（`java -jar` / 直接実行どちらも同じ）
+
+```bash
+java -jar target/mcp-server-0.0.1-SNAPSHOT.jar \
+  --server.port=8081 \
+  --cotogoto.upstream.conversations-url=https://app.cotogoto.ai/webapi/api/mcp/conversations
+```
+
+#### 環境変数で渡す
+
+```bash
+export SERVER_PORT=8081
+export COTOGOTO_UPSTREAM_CONVERSATIONS_URL=https://app.cotogoto.ai/webapi/api/mcp/conversations
+java -jar target/mcp-server-0.0.1-SNAPSHOT.jar
+```
+
+#### JVM オプションを渡す（メモリなど）
+
+```bash
+java -Xms256m -Xmx512m -jar target/mcp-server-0.0.1-SNAPSHOT.jar
+```
+
 ---
 
 ## エンドポイント

@@ -10,6 +10,30 @@
 
 ---
 
+## `mcp.json` について
+
+このリポジトリは MCP クライアント設定（`mcp.json`）のフォーマットを定義していません。
+`mcp.json` の書式は利用する MCP クライアントごとに異なるため、
+クライアントの公式ドキュメントに従って設定してください。
+
+本サーバーが提供するインターフェースは HTTP(S) の
+`POST /api/mcp/conversations` で、SSE をそのまま中継する構成です。
+`mcp.json` 側では、この HTTP エンドポイントを呼び出せるクライアントや
+プロキシ/ブリッジの設定が必要になります。
+
+### LM Studio について
+
+LM Studio の `mcp.json` 書式は LM Studio 側で定義されます。
+LM Studio の MCP 設定手順は公式ドキュメントを参照してください。
+https://lmstudio.ai/docs/app/mcp
+
+LM Studio が HTTP への直接接続に対応している場合は、
+このサーバーの `POST /api/mcp/conversations` を呼び出す設定を行ってください。
+もし LM Studio が MCP の stdio 方式のみ対応している場合は、
+stdio を HTTP へ中継するブリッジを用意する必要があります。
+
+---
+
 ## 設定
 
 `src/main/resources/application.yaml` で上流URLを設定します。

@@ -62,6 +62,11 @@ java -jar target/mcp-server-0.0.1-SNAPSHOT.jar
 ./target/mcp-server-0.0.1-SNAPSHOT.jar
 ```
 
+### 事前に必要なもの
+
+- Java 17 以上
+- cotogoto の API トークン（`apiToken`）
+
 ### パラメータの渡し方
 
 Spring Boot の標準的な引数や環境変数で設定値を渡せます。
@@ -86,6 +91,39 @@ java -jar target/mcp-server-0.0.1-SNAPSHOT.jar
 
 ```bash
 java -Xms256m -Xmx512m -jar target/mcp-server-0.0.1-SNAPSHOT.jar
+```
+
+### 動作確認（ローカルでの一連の手順）
+
+1. ビルド
+
+```bash
+./mvnw package
+```
+
+2. 起動（必要ならポートや上流URLを変更）
+
+```bash
+java -jar target/mcp-server-0.0.1-SNAPSHOT.jar \
+  --server.port=8081 \
+  --cotogoto.upstream.conversations-url=https://app.cotogoto.ai/webapi/api/mcp/conversations
+```
+
+3. 会話リクエストを送信（`apiToken` は実際の値に置き換えてください）
+
+```bash
+curl -N -X POST http://localhost:8081/api/mcp/conversations \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: text/event-stream' \
+  -d '{
+    "sessionId": "SESSION_ID",
+    "apiToken": "API_TOKEN",
+    "entry": {
+      "turnId": "turn-1",
+      "role": "user",
+      "content": "おはようございます"
+    }
+  }'
 ```
 
 ---

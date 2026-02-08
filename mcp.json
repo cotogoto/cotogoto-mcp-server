@@ -1,20 +1,11 @@
 {
   "mcpServers": {
-    "cotogoto-mcp": {
+    "sample-mcp": {
       "command": "java",
       "args": [
-        "-Xms256m",
-        "-Xmx512m",
         "-jar",
-        "C:/cotogoto/mcp-server-0.0.1-SNAPSHOT.jar",
-        "--server.port=8081"
-      ],
-      "env": {
-        "COTOGOTO_UPSTREAM_CONVERSATIONS_URL": "https://app.cotogoto.ai/webapi/api/mcp/conversations",
-        "COTOGOTO_UPSTREAM_API_TOKEN": "your-api-token"
-      },
-      "transport": "http",
-      "url": "http://localhost:8081/api/mcp/conversations"
+        "D:/github/cotogoto-mcp-server/target/cotogoto-mcp-server.jar"
+      ]
     }
   }
 }

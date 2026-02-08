@@ -4,8 +4,10 @@ spring:
   ai:
     mcp:
       server:
-        enabled: true
+        type: SYNC
+        stdio: true
 
 cotogoto:
   upstream:
     conversations-url: https://app.cotogoto.ai/webapi/api/mcp/conversations
+    api-token: ${token}

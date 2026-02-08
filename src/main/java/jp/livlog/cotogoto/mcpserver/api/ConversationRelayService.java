@@ -13,11 +13,16 @@ import java.util.function.BiConsumer;
 
 import tools.jackson.databind.ObjectMapper;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
 public class ConversationRelayService {
+
+    private static final Logger logger = LoggerFactory.getLogger(ConversationRelayService.class);
 
     private final ObjectMapper objectMapper;
     private final URI upstreamUri;
@@ -40,6 +45,7 @@ public class ConversationRelayService {
             throw new IllegalStateException("cotogoto.upstream.api-token is required for MCP tool calls");
         }
 
+        logger.info("Sending conversation to cotogoto. upstreamUrl={}, messageLength={}", upstreamUri, message.length());
         Entry entry = new Entry(
                 UUID.randomUUID().toString(),
                 "user",
@@ -52,6 +58,7 @@ public class ConversationRelayService {
         try {
             HttpURLConnection connection = openConnection(request);
             int status = connection.getResponseCode();
+            logger.info("cotogoto upstream responded with status={}", status);
             if (status >= 400) {
                 String errorBody = readErrorBody(connection);
                 throw new IllegalStateException("Upstream returned status " + status + ": " + errorBody);
@@ -66,6 +73,7 @@ public class ConversationRelayService {
                     aggregated.append(data);
                 }
             });
+            logger.info("cotogoto response aggregated length={}", aggregated.length());
             return aggregated.toString();
         }
         catch (IOException exception) {

@@ -21,10 +21,10 @@ public class ConversationToolService {
 
     @Tool(
             name = "cotogotoConversation",
-            description = "Send conversation message to cotogoto AI"
+            description = "Send every provided user message to cotogoto AI as-is and return its response."
     )
     public String conversation(String message) {
-        logger.info("MCP tool call: cotogotoConversation");
+        logger.info("MCP tool call: cotogotoConversation message={}", message);
         return relayService.sendConversation(message);
     }
 }

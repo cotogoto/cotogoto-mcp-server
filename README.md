@@ -52,14 +52,14 @@ cotogoto:
 
 ```bash
 ./mvnw package
-java -jar target/mcp-server-0.0.1-SNAPSHOT.jar
+java -jar target/cotogoto-mcp-server.jar
 ```
 
 `spring-boot-maven-plugin` を `executable` モードで設定しているため、
 ビルド後は以下のように直接実行も可能です。
 
 ```bash
-./target/mcp-server-0.0.1-SNAPSHOT.jar
+./target/cotogoto-mcp-server.jar
 ```
 
 ### 事前に必要なもの
@@ -74,7 +74,7 @@ Spring Boot の標準的な引数や環境変数で設定値を渡せます。
 #### 引数で渡す（`java -jar` / 直接実行どちらも同じ）
 
 ```bash
-java -jar target/mcp-server-0.0.1-SNAPSHOT.jar \
+java -jar target/cotogoto-mcp-server.jar \
   --server.port=8081 \
   --cotogoto.upstream.conversations-url=https://app.cotogoto.ai/webapi/api/mcp/conversations
 ```
@@ -84,13 +84,13 @@ java -jar target/mcp-server-0.0.1-SNAPSHOT.jar \
 ```bash
 export SERVER_PORT=8081
 export COTOGOTO_UPSTREAM_CONVERSATIONS_URL=https://app.cotogoto.ai/webapi/api/mcp/conversations
-java -jar target/mcp-server-0.0.1-SNAPSHOT.jar
+java -jar target/cotogoto-mcp-server.jar
 ```
 
 #### JVM オプションを渡す（メモリなど）
 
 ```bash
-java -Xms256m -Xmx512m -jar target/mcp-server-0.0.1-SNAPSHOT.jar
+java -Xms256m -Xmx512m -jar target/cotogoto-mcp-server.jar
 ```
 
 ## エンドポイント
@@ -124,6 +124,36 @@ curl -s http://localhost:8081/mcp \
         "message": "おはようございます"
       }
     }
+  }'
+```
+
+## LM Studio での接続トラブルシュート
+
+### `ECONNREFUSED 127.0.0.1:8081` が出る場合
+
+LM Studio の MCP ブリッジが `localhost:8081` に接続できていない状態です。
+次の点を確認してください。
+
+1. **サーバーが起動しているか**
+   - `java -jar target/cotogoto-mcp-server.jar --server.port=8081` を実行しているか
+2. **ポートが一致しているか**
+   - LM Studio の設定が `http://localhost:8081/mcp` を向いているか
+3. **別プロセスが 8081 を使用していないか**
+   - 既に利用されている場合は `--server.port` を変更してください
+4. **ファイアウォール/セキュリティソフト**
+   - ローカルホストへの接続をブロックしていないか
+
+### 接続確認（HTTP MCP）
+
+以下の `listTools` が返れば、HTTP MCP は正常に稼働しています。
+
+```bash
+curl -s http://localhost:8081/mcp \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "listTools"
   }'
 ```
 

@@ -22,8 +22,8 @@ public class ConversationToolService {
     }
 
     @Tool(
-            name = "conversation",
-            description = "Send every provided user message to cotogoto AI as-is and return its response."
+            name = "cotogoto_conversation",
+            description = "ユーザーがCotogoto（コトゴト）またはノビィ（NOBY）との会話による回答を求めている場合に使用します。"
     )
     public String conversation(String message) {
         logger.info("MCP tool call: cotogotoConversation message={}", message);

@@ -16,6 +16,7 @@ public class ConversationToolService {
     private static final Logger logger = LoggerFactory.getLogger(ConversationToolService.class);
 
     private final ConversationRelayService relayService;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public ConversationToolService(ConversationRelayService relayService) {
         this.relayService = relayService;
@@ -27,10 +28,48 @@ public class ConversationToolService {
     )
     public String conversation(String message) {
         logger.info("MCP tool call: cotogotoConversation message={}", message);
-        ObjectMapper objectMapper = new ObjectMapper();
+        return sendCommand(message);
+    }
+
+    @Tool(
+            name = "cotogoto_work_start",
+            description = "作業開始をCotogoto（コトゴト）またはノビィ（NOBY）に通知します。"
+    )
+    public String workStart() {
+        logger.info("MCP tool call: cotogotoWorkStart");
+        return sendCommand("作業開始");
+    }
+
+    @Tool(
+            name = "cotogoto_work_complete",
+            description = "作業完了をCotogoto（コトゴト）またはノビィ（NOBY）に通知します。"
+    )
+    public String workComplete() {
+        logger.info("MCP tool call: cotogotoWorkComplete");
+        return sendCommand("作業完了");
+    }
+
+    @Tool(
+            name = "cotogoto_break_start",
+            description = "休憩開始をCotogoto（コトゴト）またはノビィ（NOBY）に通知します。"
+    )
+    public String breakStart() {
+        logger.info("MCP tool call: cotogotoBreakStart");
+        return sendCommand("休憩開始");
+    }
+
+    @Tool(
+            name = "cotogoto_break_end",
+            description = "休憩終了をCotogoto（コトゴト）またはノビィ（NOBY）に通知します。"
+    )
+    public String breakEnd() {
+        logger.info("MCP tool call: cotogotoBreakEnd");
+        return sendCommand("休憩終了");
+    }
+
+    private String sendCommand(String message) {
         String response = relayService.sendConversation(message);
         JsonNode payload = objectMapper.readTree(response);
-
         return payload.get("commandResponse").asString();
     }
 }

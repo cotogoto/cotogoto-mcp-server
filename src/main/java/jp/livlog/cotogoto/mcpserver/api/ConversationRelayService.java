@@ -60,7 +60,7 @@ public class ConversationRelayService {
             StringBuilder aggregated = new StringBuilder();
             streamEvents(connection, (eventName, data) -> {
                 if (data != null && !data.isBlank()) {
-                    if (aggregated.length() > 0) {
+                    if (!aggregated.isEmpty()) {
                         aggregated.append('\n');
                     }
                     aggregated.append(data);
@@ -114,7 +114,7 @@ public class ConversationRelayService {
 
             while ((line = reader.readLine()) != null) {
                 if (line.isEmpty()) {
-                    if (eventName != null || data.length() > 0) {
+                    if (eventName != null || !data.isEmpty()) {
                         handler.accept(eventName, data.toString());
                     }
                     eventName = null;
@@ -128,7 +128,7 @@ public class ConversationRelayService {
                 }
 
                 if (line.startsWith("data:")) {
-                    if (data.length() > 0) {
+                    if (!data.isEmpty()) {
                         data.append('\n');
                     }
                     data.append(line.substring("data:".length()).trim());

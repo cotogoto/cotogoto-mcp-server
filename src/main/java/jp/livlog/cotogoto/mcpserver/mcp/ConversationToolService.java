@@ -7,6 +7,8 @@ import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.stereotype.Service;
 
 import jp.livlog.cotogoto.mcpserver.api.ConversationRelayService;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 @Service
 public class ConversationToolService {
@@ -20,11 +22,15 @@ public class ConversationToolService {
     }
 
     @Tool(
-            name = "cotogotoConversation",
+            name = "conversation",
             description = "Send every provided user message to cotogoto AI as-is and return its response."
     )
     public String conversation(String message) {
         logger.info("MCP tool call: cotogotoConversation message={}", message);
-        return relayService.sendConversation(message);
+        ObjectMapper objectMapper = new ObjectMapper();
+        String response = relayService.sendConversation(message);
+        JsonNode payload = objectMapper.readTree(response);
+
+        return payload.get("commandResponse").asString();
     }
 }

@@ -23,6 +23,9 @@ cotogoto の SSE API に対して会話リクエストを同期的に送信し�
 そのため、`ConversationRequest` の各フィールド（`sessionId` / `apiToken` / `entry` など）は
 `mcp.json` に直接書くのではなく、クライアントがリクエストを送るタイミングで渡します。
 
+一方で、本サーバー自体が上流 API を呼び出すための `apiToken` は、
+MCP クライアントの設定（`mcp.json` など）で環境変数として渡してください。
+
 ### LM Studio について
 
 LM Studio の `mcp.json` 書式は LM Studio 側で定義されます。
@@ -45,6 +48,7 @@ cotogoto:
 ```
 
 必要に応じて環境ごとに `cotogoto.upstream.conversations-url` を上書きしてください。
+`apiToken` は `mcp.json` から環境変数で渡す想定です。
 
 ---
 
@@ -84,6 +88,7 @@ java -jar target/cotogoto-mcp-server.jar \
 ```bash
 export SERVER_PORT=8081
 export COTOGOTO_UPSTREAM_CONVERSATIONS_URL=https://app.cotogoto.ai/webapi/api/mcp/conversations
+export COTOGOTO_UPSTREAM_API_TOKEN=your-api-token
 java -jar target/cotogoto-mcp-server.jar
 ```
 

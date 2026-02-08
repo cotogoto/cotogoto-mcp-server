@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "sample-mcp": {
+    "cotogoto-mcp": {
       "command": "java",
       "args": [
         "-jar",

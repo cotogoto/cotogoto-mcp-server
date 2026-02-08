@@ -9,4 +9,3 @@ spring:
 cotogoto:
   upstream:
     conversations-url: https://app.cotogoto.ai/webapi/api/mcp/conversations
-    api-token: ""

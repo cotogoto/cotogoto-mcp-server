@@ -10,7 +10,8 @@
         "--server.port=8081"
       ],
       "env": {
-        "COTOGOTO_UPSTREAM_CONVERSATIONS_URL": "https://app.cotogoto.ai/webapi/api/mcp/conversations"
+        "COTOGOTO_UPSTREAM_CONVERSATIONS_URL": "https://app.cotogoto.ai/webapi/api/mcp/conversations",
+        "COTOGOTO_UPSTREAM_API_TOKEN": "your-api-token"
       },
       "transport": "http",
       "url": "http://localhost:8081/api/mcp/conversations"

@@ -27,6 +27,38 @@ MCP JSON-RPC でツールを公開し、CotoGoto の SSE API に同期的に会�
 一方で、本サーバー自体が上流 API を呼び出すための `apiToken` は、
 環境変数 `COTOGOTO_API_KEY` で渡してください（`application.yaml` の参照先）。
 
+### stdio / HTTP の違い（はまりポイント）
+
+本サーバーは `application.yaml` で **stdio を有効**にしています。
+そのため **MCP クライアントが stdio で起動する構成**の場合、`/mcp` への HTTP リクエストは使いません。
+
+- **stdio 接続**: MCP クライアントが `java -jar ...` を起動し、標準入出力で `listTools` / `callTool` をやり取りします。
+- **HTTP 接続**: MCP クライアント（またはブリッジ）が `http://localhost:8081/mcp` に JSON-RPC を投げます。
+
+stdio で起動しているのに HTTP の `curl` を試すと「うまく動かない」ので、
+**stdio / HTTP のどちらで接続するか**を最初に確認してください。
+
+#### stdio 起動の例（MCP クライアント側）
+
+MCP クライアントの設定例（フォーマットはクライアントごとに異なります）:
+
+```json
+{
+  "mcpServers": {
+    "cotogoto-mcp": {
+      "command": "java",
+      "args": [
+        "-jar",
+        "/path/to/cotogoto-mcp-server.jar"
+      ],
+      "env": {
+        "COTOGOTO_API_KEY": "your-api-token"
+      }
+    }
+  }
+}
+```
+
 ### LM Studio について
 
 LM Studio の `mcp.json` 書式は LM Studio 側で定義されます。
@@ -107,6 +139,7 @@ java -Xms256m -Xmx512m -jar target/cotogoto-mcp-server.jar
 ### MCP JSON-RPC (`/mcp`)
 
 Spring AI の MCP サーバーは JSON-RPC 2.0 で `/mcp` を公開します。
+**HTTP 経由で接続する場合**に利用します。
 
 #### listTools
 ```bash
@@ -135,6 +168,8 @@ curl -s http://localhost:8081/mcp \
     }
   }'
 ```
+
+> 重要: MCP クライアントが stdio 起動の場合は、`curl` ではなく **クライアント側の `listTools` / `callTool` 実行機能**で確認してください。
 
 ### 提供ツール（Tool 名）
 

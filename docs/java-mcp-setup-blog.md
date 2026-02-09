@@ -12,8 +12,8 @@ MCP JSON-RPC でツールを公開して cotogoto の SSE API に同期的にリ
 
 このプロジェクトは、以下の点が特徴です。
 
-- **MCP JSON-RPC (`/mcp`) を公開**し、`listTools` / `callTool` を受け付けます。`/mcp` は Spring AI の MCP サーバーが提供します。【F:README.md†L78-L115】
-- **上流 API に対して SSE で会話リクエストを送る**構成で、上流 URL は `application.yaml` で指定します。【F:README.md†L44-L55】【F:src/main/resources/application.yaml†L9-L13】
+- **MCP JSON-RPC (`/mcp`) を公開**し、`listTools` / `callTool` を受け付けます。`/mcp` は Spring AI の MCP サーバーが提供します。【F:README.md†L137-L172】
+- **上流 API に対して SSE で会話リクエストを送る**構成で、上流 URL は `application.yaml` で指定します。【F:README.md†L73-L87】【F:src/main/resources/application.yaml†L9-L13】
 - **Spring AI MCP Server WebMVC 依存**を利用しています。`spring-ai-starter-mcp-server-webmvc` が入っていることを確認します。【F:pom.xml†L25-L35】
 
 ---
@@ -22,8 +22,8 @@ MCP JSON-RPC でツールを公開して cotogoto の SSE API に同期的にリ
 
 README に沿って、最低限以下が必要です。
 
-- **Java 17 以上**【F:README.md†L65-L69】【F:pom.xml†L20-L21】
-- **cotogoto の API トークン**（MCP クライアントの環境変数で渡します）【F:README.md†L44-L55】【F:README.md†L65-L80】
+- **Java 17 以上**【F:README.md†L105-L108】【F:pom.xml†L20-L21】
+- **cotogoto の API トークン**（MCP クライアントの環境変数で渡します）【F:README.md†L105-L109】
 
 ---
 
@@ -54,7 +54,7 @@ java -jar target/cotogoto-mcp-server.jar
 ```
 
 `spring-boot-maven-plugin` が `executable` モードで設定されているため、
-ビルド後は以下のように直接実行できます。【F:README.md†L57-L64】
+ビルド後は以下のように直接実行できます。【F:README.md†L91-L103】
 
 ```bash
 ./target/cotogoto-mcp-server.jar
@@ -79,11 +79,11 @@ java -jar target/cotogoto-mcp-server.jar \
 ```bash
 export SERVER_PORT=8081
 export COTOGOTO_UPSTREAM_CONVERSATIONS_URL=https://app.cotogoto.ai/webapi/api/mcp/conversations
-export COTOGOTO_UPSTREAM_API_TOKEN=your-api-token
+export COTOGOTO_API_KEY=your-api-token
 java -jar target/cotogoto-mcp-server.jar
 ```
 
-いずれも README の手順どおりです。【F:README.md†L65-L90】
+いずれも README の手順どおりです。【F:README.md†L105-L129】
 
 ---
 
@@ -113,7 +113,7 @@ curl -s http://localhost:8081/mcp \
     "id": 2,
     "method": "callTool",
     "params": {
-      "name": "cotogotoConversation",
+      "name": "cotogoto_conversation",
       "arguments": {
         "message": "おはようございます"
       }
@@ -121,7 +121,7 @@ curl -s http://localhost:8081/mcp \
   }'
 ```
 
-上記は README に掲載されているサンプルです。【F:README.md†L78-L115】
+上記は README に掲載されているサンプルです。【F:README.md†L137-L172】
 
 ---
 
@@ -133,15 +133,26 @@ curl -s http://localhost:8081/mcp \
 ポイントは以下です。
 
 - `mcp.json` は「どの MCP サーバーに接続するか」を定義するものです。【F:README.md†L11-L25】
-- `ConversationRequest` の内容は実行時に送るので、**`mcp.json` に直接書かない**設計です。【F:README.md†L17-L25】
-- 上流 API 用の `apiToken` は **環境変数**で渡します。【F:README.md†L23-L25】
+- `ConversationRequest` の内容は実行時に送るので、**`mcp.json` に直接書かない**設計です。【F:README.md†L20-L25】
+- 上流 API 用の `apiToken` は **環境変数**で渡します。【F:README.md†L27-L28】
+
+### stdio / HTTP の違い（はまりポイント）
+
+このプロジェクトは `application.yaml` で **stdio 接続**を有効にしています。【F:src/main/resources/application.yaml†L1-L8】
+そのため **MCP クライアントが stdio で起動する構成**の場合、HTTP の `curl` 例は使いません。
+
+- **stdio 接続**: MCP クライアントが `java -jar ...` を起動し、標準入出力で `listTools` / `callTool` をやり取りする
+- **HTTP 接続**: MCP クライアント（またはブリッジ）が `http://localhost:8081/mcp` に JSON-RPC を投げる
+
+stdio で起動しているのに HTTP の `curl` を試すと詰まりやすいので、
+**どちらで接続しているか**を先に確認してください。
 
 ---
 
 ## 8. LM Studio で使う場合の注意点
 
 README の補足によると、LM Studio の MCP 設定は LM Studio 側の仕様です。
-HTTP MCP に接続できない場合は、以下を確認します。【F:README.md†L117-L148】
+HTTP MCP に接続できない場合は、以下を確認します。【F:README.md†L184-L212】
 
 - サーバーが起動しているか
 - ポートが一致しているか
@@ -156,8 +167,8 @@ HTTP MCP に接続できない場合は、以下を確認します。【F:README
 cotogoto の SSE API へ会話リクエストを中継する最小構成です。
 
 - **設定は `application.yaml`** で完結【F:src/main/resources/application.yaml†L1-L13】
-- **ビルド・起動手順は README に沿うだけ**【F:README.md†L57-L90】
-- **MCP エンドポイントは `/mcp`** で `listTools` / `callTool` が使える【F:README.md†L78-L115】
+- **ビルド・起動手順は README に沿うだけ**【F:README.md†L91-L135】
+- **MCP エンドポイントは `/mcp`** で `listTools` / `callTool` が使える【F:README.md†L137-L172】
 
 この流れを押さえれば、Java で MCP サーバーを立ち上げる最短ルートになります。
 

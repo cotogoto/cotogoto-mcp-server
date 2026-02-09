@@ -6,10 +6,13 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.BiConsumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import tools.jackson.databind.ObjectMapper;
 
@@ -23,18 +26,22 @@ import org.springframework.stereotype.Service;
 public class ConversationRelayService {
 
     private static final Logger logger = LoggerFactory.getLogger(ConversationRelayService.class);
+    private static final Pattern CHARSET_PATTERN = Pattern.compile("charset=([^;]+)", Pattern.CASE_INSENSITIVE);
 
     private final ObjectMapper objectMapper;
     private final URI upstreamUri;
     private final String apiToken;
+    private final String responseCharset;
 
     public ConversationRelayService(
             ObjectMapper objectMapper,
             @Value("${cotogoto.upstream.conversations-url:https://app.cotogoto.ai/webapi/api/mcp/conversations}") String upstreamUrl,
-            @Value("${cotogoto.upstream.api-token:}") String apiToken) {
+            @Value("${cotogoto.upstream.api-token:}") String apiToken,
+            @Value("${cotogoto.upstream.response-charset:utf-8}") String responseCharset) {
         this.objectMapper = objectMapper;
         this.upstreamUri = URI.create(upstreamUrl);
         this.apiToken = apiToken;
+        this.responseCharset = responseCharset;
     }
 
     public String sendConversation(String message) {
@@ -87,8 +94,9 @@ public class ConversationRelayService {
         connection.setDoOutput(true);
         connection.setConnectTimeout(10000);
         connection.setReadTimeout(0);
-        connection.setRequestProperty("Content-Type", "application/json");
+        connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
         connection.setRequestProperty("Accept", "text/event-stream");
+        connection.setRequestProperty("Accept-Charset", "utf-8");
 
         byte[] payload = objectMapper.writeValueAsBytes(request);
         try (OutputStream outputStream = connection.getOutputStream()) {
@@ -102,7 +110,8 @@ public class ConversationRelayService {
             return "";
         }
         try (BufferedReader errorReader = new BufferedReader(
-                new InputStreamReader(connection.getErrorStream(), StandardCharsets.UTF_8))) {
+                new InputStreamReader(connection.getErrorStream(),
+                        resolveCharset(connection.getContentType(), responseCharset)))) {
             StringBuilder errorBody = new StringBuilder();
             String line;
             while ((line = errorReader.readLine()) != null) {
@@ -115,7 +124,8 @@ public class ConversationRelayService {
     private void streamEvents(HttpURLConnection connection, BiConsumer<String, String> handler) throws IOException {
         Objects.requireNonNull(handler, "handler");
         try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
+                new InputStreamReader(connection.getInputStream(),
+                        resolveCharset(connection.getContentType(), responseCharset)))) {
             String line;
             String eventName = null;
             StringBuilder data = new StringBuilder();
@@ -145,6 +155,35 @@ public class ConversationRelayService {
             if (eventName != null || !data.isEmpty()) {
                 handler.accept(eventName, data.toString());
             }
+        }
+    }
+
+    static Charset resolveCharset(String contentType, String overrideCharset) {
+        if (overrideCharset != null && !overrideCharset.isBlank() && !"auto".equalsIgnoreCase(overrideCharset)) {
+            return parseCharset(overrideCharset);
+        }
+        if (contentType == null || contentType.isBlank()) {
+            return StandardCharsets.UTF_8;
+        }
+        Matcher matcher = CHARSET_PATTERN.matcher(contentType);
+        if (!matcher.find()) {
+            return StandardCharsets.UTF_8;
+        }
+        return parseCharset(matcher.group(1));
+    }
+
+    private static Charset parseCharset(String charsetName) {
+        if (charsetName == null) {
+            return StandardCharsets.UTF_8;
+        }
+        String normalized = charsetName.trim().replace("\"", "");
+        if (normalized.isEmpty()) {
+            return StandardCharsets.UTF_8;
+        }
+        try {
+            return Charset.forName(normalized);
+        } catch (Exception ignored) {
+            return StandardCharsets.UTF_8;
         }
     }
 

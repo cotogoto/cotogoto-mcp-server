@@ -3,6 +3,7 @@ package jp.livlog.cotogoto.mcpserver.api;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.InetSocketAddress;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -13,6 +14,20 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 class ConversationRelayServiceTest {
+
+    @Test
+    void resolveCharsetDefaultsToUtf8() {
+        assertThat(ConversationRelayService.resolveCharset(null)).isEqualTo(StandardCharsets.UTF_8);
+        assertThat(ConversationRelayService.resolveCharset("text/event-stream")).isEqualTo(StandardCharsets.UTF_8);
+        assertThat(ConversationRelayService.resolveCharset("text/event-stream; charset="))
+                .isEqualTo(StandardCharsets.UTF_8);
+    }
+
+    @Test
+    void resolveCharsetUsesDeclaredCharset() {
+        Charset charset = ConversationRelayService.resolveCharset("text/event-stream; charset=Shift_JIS");
+        assertThat(charset).isEqualTo(Charset.forName("Shift_JIS"));
+    }
 
     @Test
     void sendConversationPostsToUpstream() throws Exception {

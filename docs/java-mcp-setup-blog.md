@@ -147,6 +147,26 @@ curl -s http://localhost:8081/mcp \
 stdio で起動しているのに HTTP の `curl` を試すと詰まりやすいので、
 **どちらで接続しているか**を先に確認してください。
 
+### 文字化け対策（mcp.json の JVM オプション）
+
+環境によっては JVM のデフォルト文字コードが UTF-8 以外になり、出力が文字化けすることがあります。
+その場合は `mcp.json` の起動コマンドに **`-Dfile.encoding=UTF-8`** を追加して、
+JVM の文字コードを明示的に UTF-8 に固定してください。
+
+```json
+{
+  "name": "cotogoto-mcp-server",
+  "command": "java",
+  "args": [
+    "-Dfile.encoding=UTF-8",
+    "-jar",
+    "/path/to/cotogoto-mcp-server.jar"
+  ]
+}
+```
+
+このオプションを付けることで、stdio 経由の JSON-RPC 応答も UTF-8 として扱われ、
+ログやレスポンスの文字化けを回避できます。
 ---
 
 ## 8. LM Studio で使う場合の注意点

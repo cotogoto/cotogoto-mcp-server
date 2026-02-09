@@ -38,6 +38,30 @@ MCP JSON-RPC でツールを公開し、CotoGoto の SSE API に同期的に会�
 stdio で起動しているのに HTTP の `curl` を試すと「うまく動かない」ので、
 **stdio / HTTP のどちらで接続するか**を最初に確認してください。
 
+### 文字化け対策（mcp.json の JVM オプション）
+
+環境によっては JVM のデフォルト文字コードが UTF-8 以外になり、ログやレスポンスが文字化けすることがあります。
+その場合は `mcp.json` の起動コマンドに **`-Dfile.encoding=UTF-8`** を追加して、
+JVM の文字コードを明示的に UTF-8 に固定してください。
+
+```json
+{
+  "mcpServers": {
+    "cotogoto-mcp": {
+      "command": "java",
+      "args": [
+        "-Dfile.encoding=UTF-8",
+        "-jar",
+        "/path/to/cotogoto-mcp-server.jar"
+      ],
+      "env": {
+        "COTOGOTO_API_KEY": "your-api-token"
+      }
+    }
+  }
+}
+```
+
 #### stdio 起動の例（MCP クライアント側）
 
 MCP クライアントの設定例（フォーマットはクライアントごとに異なります）:

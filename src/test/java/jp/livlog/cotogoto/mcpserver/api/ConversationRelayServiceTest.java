@@ -17,16 +17,23 @@ class ConversationRelayServiceTest {
 
     @Test
     void resolveCharsetDefaultsToUtf8() {
-        assertThat(ConversationRelayService.resolveCharset(null)).isEqualTo(StandardCharsets.UTF_8);
-        assertThat(ConversationRelayService.resolveCharset("text/event-stream")).isEqualTo(StandardCharsets.UTF_8);
-        assertThat(ConversationRelayService.resolveCharset("text/event-stream; charset="))
+        assertThat(ConversationRelayService.resolveCharset(null, null)).isEqualTo(StandardCharsets.UTF_8);
+        assertThat(ConversationRelayService.resolveCharset("text/event-stream", "auto"))
+                .isEqualTo(StandardCharsets.UTF_8);
+        assertThat(ConversationRelayService.resolveCharset("text/event-stream; charset=", "auto"))
                 .isEqualTo(StandardCharsets.UTF_8);
     }
 
     @Test
     void resolveCharsetUsesDeclaredCharset() {
-        Charset charset = ConversationRelayService.resolveCharset("text/event-stream; charset=Shift_JIS");
+        Charset charset = ConversationRelayService.resolveCharset("text/event-stream; charset=Shift_JIS", "auto");
         assertThat(charset).isEqualTo(Charset.forName("Shift_JIS"));
+    }
+
+    @Test
+    void resolveCharsetHonorsOverrideCharset() {
+        Charset charset = ConversationRelayService.resolveCharset("text/event-stream; charset=Shift_JIS", "utf-8");
+        assertThat(charset).isEqualTo(StandardCharsets.UTF_8);
     }
 
     @Test
@@ -51,7 +58,8 @@ class ConversationRelayServiceTest {
             ConversationRelayService service = new ConversationRelayService(
                     objectMapper,
                     "https://app.cotogoto.ai/webapi/api/mcp/conversations",
-                    "a02003fb2eda2ee1f9000da21963c69a");
+                    "a02003fb2eda2ee1f9000da21963c69a",
+                    "utf-8");
 
             String response = service.sendConversation("おみくじ引きたい");
 

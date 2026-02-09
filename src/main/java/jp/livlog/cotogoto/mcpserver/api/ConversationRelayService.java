@@ -142,6 +142,9 @@ public class ConversationRelayService {
                     data.append(line.substring("data:".length()).trim());
                 }
             }
+            if (eventName != null || !data.isEmpty()) {
+                handler.accept(eventName, data.toString());
+            }
         }
     }
 

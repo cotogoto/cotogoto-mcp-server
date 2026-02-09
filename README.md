@@ -1,9 +1,10 @@
 # cotogoto-mcp-server
 
-## MCP 会話 API
+## CotoGoto 用 MCP サーバー（Java / Spring Boot）
 
-このサーバーは、MCP JSON-RPC でツールを公開し、
-cotogoto の SSE API に対して会話リクエストを同期的に送信します。
+このリポジトリは、CotoGoto（コトゴト）向けの MCP サーバーを **Java/Spring Boot** で提供します。
+MCP JSON-RPC でツールを公開し、CotoGoto の SSE API に同期的に会話リクエストを送信します。
+**CotoGoto 用 MCP サーバーのライブラリ／参照実装**として利用できるよう、設定と起動方法をまとめています。
 
 ---
 
@@ -24,7 +25,39 @@ cotogoto の SSE API に対して会話リクエストを同期的に送信し�
 `mcp.json` に直接書くのではなく、クライアントがリクエストを送るタイミングで渡します。
 
 一方で、本サーバー自体が上流 API を呼び出すための `apiToken` は、
-MCP クライアントの設定（`mcp.json` など）で環境変数として渡してください。
+環境変数 `COTOGOTO_API_KEY` で渡してください（`application.yaml` の参照先）。
+
+### stdio / HTTP の違い（はまりポイント）
+
+本サーバーは `application.yaml` で **stdio を有効**にしています。
+そのため **MCP クライアントが stdio で起動する構成**の場合、`/mcp` への HTTP リクエストは使いません。
+
+- **stdio 接続**: MCP クライアントが `java -jar ...` を起動し、標準入出力で `listTools` / `callTool` をやり取りします。
+- **HTTP 接続**: MCP クライアント（またはブリッジ）が `http://localhost:8081/mcp` に JSON-RPC を投げます。
+
+stdio で起動しているのに HTTP の `curl` を試すと「うまく動かない」ので、
+**stdio / HTTP のどちらで接続するか**を最初に確認してください。
+
+#### stdio 起動の例（MCP クライアント側）
+
+MCP クライアントの設定例（フォーマットはクライアントごとに異なります）:
+
+```json
+{
+  "mcpServers": {
+    "cotogoto-mcp": {
+      "command": "java",
+      "args": [
+        "-jar",
+        "/path/to/cotogoto-mcp-server.jar"
+      ],
+      "env": {
+        "COTOGOTO_API_KEY": "your-api-token"
+      }
+    }
+  }
+}
+```
 
 ### LM Studio について
 
@@ -45,10 +78,13 @@ MCP の stdio 方式のみ対応している場合は、stdio を HTTP へ中継
 cotogoto:
   upstream:
     conversations-url: https://app.cotogoto.ai/webapi/api/mcp/conversations
+    api-token: ${COTOGOTO_API_KEY}
 ```
 
 必要に応じて環境ごとに `cotogoto.upstream.conversations-url` を上書きしてください。
-`apiToken` は `mcp.json` から環境変数で渡す想定です。
+`apiToken` は `COTOGOTO_API_KEY` で環境変数として渡す想定です。
+
+> 補足: `cotogoto.upstream.api-token` が空の場合はツール呼び出し時にエラーになります。
 
 ---
 
@@ -69,7 +105,7 @@ java -jar target/cotogoto-mcp-server.jar
 ### 事前に必要なもの
 
 - Java 17 以上
-- cotogoto の API トークン（`apiToken`）
+- CotoGoto の API トークン（`COTOGOTO_API_KEY`）
 
 ### パラメータの渡し方
 
@@ -88,7 +124,7 @@ java -jar target/cotogoto-mcp-server.jar \
 ```bash
 export SERVER_PORT=8081
 export COTOGOTO_UPSTREAM_CONVERSATIONS_URL=https://app.cotogoto.ai/webapi/api/mcp/conversations
-export COTOGOTO_UPSTREAM_API_TOKEN=your-api-token
+export COTOGOTO_API_KEY=your-api-token
 java -jar target/cotogoto-mcp-server.jar
 ```
 
@@ -103,6 +139,7 @@ java -Xms256m -Xmx512m -jar target/cotogoto-mcp-server.jar
 ### MCP JSON-RPC (`/mcp`)
 
 Spring AI の MCP サーバーは JSON-RPC 2.0 で `/mcp` を公開します。
+**HTTP 経由で接続する場合**に利用します。
 
 #### listTools
 ```bash
@@ -124,13 +161,25 @@ curl -s http://localhost:8081/mcp \
     "id": 2,
     "method": "callTool",
     "params": {
-      "name": "cotogotoConversation",
+      "name": "cotogoto_conversation",
       "arguments": {
         "message": "おはようございます"
       }
     }
   }'
 ```
+
+> 重要: MCP クライアントが stdio 起動の場合は、`curl` ではなく **クライアント側の `listTools` / `callTool` 実行機能**で確認してください。
+
+### 提供ツール（Tool 名）
+
+このサーバーが提供する MCP ツール名は以下です。
+
+- `cotogoto_conversation`（任意のメッセージを送信）
+- `cotogoto_work_start`（作業開始を通知）
+- `cotogoto_work_complete`（作業完了を通知）
+- `cotogoto_break_start`（休憩開始を通知）
+- `cotogoto_break_end`（休憩終了を通知）
 
 ## LM Studio での接続トラブルシュート
 
@@ -167,3 +216,5 @@ curl -s http://localhost:8081/mcp \
 - `ConversationRelayService`
   - 上流URLへ `POST`（`Accept: text/event-stream`）
   - SSE行を読み取り、イベント名とデータを集約して返却
+- `ConversationToolService`
+  - MCP ツール（`cotogoto_*`）を定義し、上流へメッセージを送信

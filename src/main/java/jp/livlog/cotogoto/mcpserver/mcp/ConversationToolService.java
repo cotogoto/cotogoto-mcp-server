@@ -16,10 +16,11 @@ public class ConversationToolService {
     private static final Logger logger = LoggerFactory.getLogger(ConversationToolService.class);
 
     private final ConversationRelayService relayService;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
-    public ConversationToolService(ConversationRelayService relayService) {
+    public ConversationToolService(ConversationRelayService relayService, ObjectMapper objectMapper) {
         this.relayService = relayService;
+        this.objectMapper = objectMapper;
     }
 
     @Tool(
@@ -69,7 +70,22 @@ public class ConversationToolService {
 
     private String sendCommand(String message) {
         String response = relayService.sendConversation(message);
-        JsonNode payload = objectMapper.readTree(response);
-        return payload.get("commandResponse").asString();
+        if (response == null || response.isBlank()) {
+            throw new IllegalStateException("Upstream response is empty");
+        }
+        JsonNode payload = readPayload(response);
+        JsonNode commandResponse = payload.get("commandResponse");
+        if (commandResponse == null || commandResponse.isNull()) {
+            throw new IllegalStateException("Upstream response missing commandResponse: " + response);
+        }
+        return commandResponse.asString();
+    }
+
+    private JsonNode readPayload(String response) {
+        try {
+            return objectMapper.readTree(response);
+        } catch (Exception exception) {
+            throw new IllegalStateException("Failed to parse upstream response: " + response, exception);
+        }
     }
 }

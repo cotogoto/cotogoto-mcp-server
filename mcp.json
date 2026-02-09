@@ -3,6 +3,7 @@
     "cotogoto-mcp": {
       "command": "java",
       "args": [
+        "-Dfile.encoding=UTF-8",
         "-jar",
         "D:/github/cotogoto-mcp-server/target/cotogoto-mcp-server.jar"
       ],

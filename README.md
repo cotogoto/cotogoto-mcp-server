@@ -44,6 +44,10 @@ stdio で起動しているのに HTTP の `curl` を試すと「うまく動か
 その場合は `mcp.json` の起動コマンドに **`-Dfile.encoding=UTF-8`** を追加して、
 JVM の文字コードを明示的に UTF-8 に固定してください。
 
+また、ポート指定を引数で渡す場合は `-server.port=8081` ではなく
+**`--server.port=8081`（ハイフン2つ）** を `-jar` の後に指定してください。
+`-server.port=...` は JVM オプションとして解釈され、`Unrecognized option` で起動に失敗します。
+
 ```json
 {
   "mcpServers": {
@@ -52,10 +56,12 @@ JVM の文字コードを明示的に UTF-8 に固定してください。
       "args": [
         "-Dfile.encoding=UTF-8",
         "-jar",
-        "/path/to/cotogoto-mcp-server.jar"
+        "/path/to/cotogoto-mcp-server.jar",
+        "--server.port=8081"
       ],
       "env": {
-        "COTOGOTO_API_KEY": "your-api-token"
+        "COTOGOTO_API_KEY": "your-api-token",
+        "SERVER_PORT": "8081"
       }
     }
   }
@@ -73,10 +79,12 @@ MCP クライアントの設定例（フォーマットはクライアントご�
       "command": "java",
       "args": [
         "-jar",
-        "/path/to/cotogoto-mcp-server.jar"
+        "/path/to/cotogoto-mcp-server.jar",
+        "--server.port=8081"
       ],
       "env": {
-        "COTOGOTO_API_KEY": "your-api-token"
+        "COTOGOTO_API_KEY": "your-api-token",
+        "SERVER_PORT": "8081"
       }
     }
   }

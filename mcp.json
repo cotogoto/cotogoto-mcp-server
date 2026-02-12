@@ -8,7 +8,8 @@
         "D:/github/cotogoto-mcp-server/target/cotogoto-mcp-server.jar"
       ],
       "env": {
-        "COTOGOTO_API_KEY": "ここにCotoGotoのAPIキーを入れる"
+        "COTOGOTO_API_KEY": "ここにCotoGotoのAPIキーを入れる",
+        "SERVER_PORT": "8081"
       }
     }
   }

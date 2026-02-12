@@ -68,29 +68,6 @@ JVM の文字コードを明示的に UTF-8 に固定してください。
 }
 ```
 
-#### stdio 起動の例（MCP クライアント側）
-
-MCP クライアントの設定例（フォーマットはクライアントごとに異なります）:
-
-```json
-{
-  "mcpServers": {
-    "cotogoto-mcp": {
-      "command": "java",
-      "args": [
-        "-jar",
-        "/path/to/cotogoto-mcp-server.jar",
-        "--server.port=8081"
-      ],
-      "env": {
-        "COTOGOTO_API_KEY": "your-api-token",
-        "SERVER_PORT": "8081"
-      }
-    }
-  }
-}
-```
-
 ### LM Studio について
 
 LM Studio の `mcp.json` 書式は LM Studio 側で定義されます。

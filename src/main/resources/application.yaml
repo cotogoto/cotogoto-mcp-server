@@ -9,6 +9,9 @@ spring:
         type: SYNC
         stdio: true
 
+server:
+  port: 8081
+
 cotogoto:
   upstream:
     conversations-url: https://app.cotogoto.ai/webapi/api/mcp/conversations
